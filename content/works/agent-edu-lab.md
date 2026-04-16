@@ -1,9 +1,9 @@
 ---
-title: Agent Edu Lab
+title: HISTORY TELLS
 date: 2025-06
-description: Agent Edu Lab
+description: 'just learn from history, know the lessons'
 tags:
-  - education
+  - history
   - learn
 link: 'https://histell.netlify.app/'
 ---
