@@ -1,8 +1,9 @@
 ---
-title: "Kito's Personal Site"
-date: "2025-04"
-description: "This site — a minimal space for works and thoughts."
-tags: [astro, tailwind]
-image: /images/works/kito-site.png
-link: /
+title: Kito's Personal Site
+date: 2025-04
+description: just a little tinny person site
+tags:
+  - person
+  - fun
+link: 'https://kitoncer.netlify.app/'
 ---
