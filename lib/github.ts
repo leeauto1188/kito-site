@@ -21,7 +21,7 @@ function headers() {
 }
 
 export async function listFiles(dirPath: string): Promise<GitHubFile[]> {
-  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${dirPath}?ref=${BRANCH}`;
+  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${dirPath}?ref=${BRANCH}&_cb=${Date.now()}`;
   const res = await fetch(url, { headers: headers() });
   if (!res.ok) {
     if (res.status === 404) return [];
@@ -33,7 +33,7 @@ export async function listFiles(dirPath: string): Promise<GitHubFile[]> {
 }
 
 export async function getFile(path: string): Promise<{ content: string; sha: string }> {
-  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`;
+  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}&_cb=${Date.now()}`;
   const res = await fetch(url, { headers: headers() });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

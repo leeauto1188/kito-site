@@ -1,9 +1,48 @@
+"use client";
+
 import Link from "next/link";
-import { getThoughts } from "@/lib/content";
+import matter from "gray-matter";
+import { useState, useEffect } from "react";
+import { listFiles, getFile } from "@/lib/github";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion";
 
 export default function ThoughtsPage() {
-  const thoughts = getThoughts();
+  const [thoughts, setThoughts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const files = await listFiles("content/thoughts");
+        const items = (await Promise.all(
+          files.map(async (f) => {
+            try {
+              const { content } = await getFile(f.path);
+              const parsed = matter(content);
+              return {
+                date: parsed.data.date,
+                content: parsed.content.trim(),
+                image: parsed.data.image,
+              };
+            } catch (e) {
+              return null;
+            }
+          })
+        )).filter(Boolean);
+        setThoughts(
+          (items as any[]).sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          )
+        );
+      } catch (err: any) {
+        setError(err.message || "Failed to load thoughts");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   return (
     <>
@@ -28,8 +67,11 @@ export default function ThoughtsPage() {
         </header>
       </FadeIn>
 
+      {loading && <p className="text-sm text-[var(--fg-muted)]">Loading...</p>}
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
       <StaggerContainer className="flex flex-col divide-y divide-[var(--border)]">
-        {thoughts.map((thought) => {
+        {thoughts.map((thought, idx) => {
           const formattedDate = new Date(thought.date).toLocaleDateString(
             "en-US",
             {
@@ -40,7 +82,7 @@ export default function ThoughtsPage() {
           );
 
           return (
-            <StaggerItem key={thought.date}>
+            <StaggerItem key={idx}>
               <article className="py-10 md:py-12">
                 <div className="mb-5 flex items-center gap-3">
                   <span className="h-px w-6 bg-[var(--border)]" />

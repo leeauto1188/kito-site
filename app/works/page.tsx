@@ -1,9 +1,47 @@
+"use client";
+
 import Link from "next/link";
-import { getWorks } from "@/lib/content";
+import matter from "gray-matter";
+import { useState, useEffect } from "react";
+import { listFiles, getFile } from "@/lib/github";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion";
 
 export default function WorksPage() {
-  const works = getWorks();
+  const [works, setWorks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const files = await listFiles("content/works");
+        const items = (await Promise.all(
+          files.map(async (f) => {
+            try {
+              const { content } = await getFile(f.path);
+              const parsed = matter(content);
+              return {
+                title: parsed.data.title,
+                date: parsed.data.date,
+                description: parsed.data.description,
+                tags: parsed.data.tags || [],
+                image: parsed.data.image,
+                link: parsed.data.link,
+              };
+            } catch (e) {
+              return null;
+            }
+          })
+        )).filter(Boolean);
+        setWorks(items as any[]);
+      } catch (err: any) {
+        setError(err.message || "Failed to load works");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   return (
     <>
@@ -28,12 +66,15 @@ export default function WorksPage() {
         </header>
       </FadeIn>
 
+      {loading && <p className="text-sm text-[var(--fg-muted)]">Loading...</p>}
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
       <StaggerContainer className="relative flex flex-col">
         {/* timeline line */}
         <div className="absolute left-[5px] top-2 bottom-0 w-px bg-[var(--border)] md:left-[6px]" />
 
-        {works.map((work) => (
-          <StaggerItem key={work.title}>
+        {works.map((work, idx) => (
+          <StaggerItem key={idx}>
             <div className="relative pl-10 md:pl-12">
               {/* dot */}
               <div className="absolute left-0 top-1.5 h-[11px] w-[11px] rounded-full border-2 border-[var(--fg-subtle)] bg-[var(--bg)]" />
@@ -49,7 +90,7 @@ export default function WorksPage() {
 
                 <p className="group relative mb-5 max-w-[560px] text-[15px] leading-relaxed text-[var(--fg-secondary)]">
                   <span className="line-clamp-2">{work.description}</span>
-                  {work.description.length > 80 && (
+                  {work.description?.length > 80 && (
                     <span className="pointer-events-none absolute left-0 top-full z-10 mt-2 hidden max-w-[400px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-sm shadow-lg group-hover:block">
                       {work.description}
                     </span>
@@ -58,7 +99,7 @@ export default function WorksPage() {
 
                 {work.tags && work.tags.length > 0 && (
                   <div className="mb-5 flex flex-wrap gap-2">
-                    {work.tags.map((tag) => (
+                    {work.tags.map((tag: string) => (
                       <span
                         key={tag}
                         className="rounded-full border border-[var(--border)] px-2.5 py-1 text-[11px] font-medium tracking-wide text-[var(--fg-muted)]"

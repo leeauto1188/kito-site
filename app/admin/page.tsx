@@ -9,6 +9,9 @@ type Tab = "works" | "thoughts";
 type Status = "idle" | "loading" | "success" | "error";
 
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "";
+const GITHUB_TOKEN = process.env.NEXT_PUBLIC_GITHUB_TOKEN || "";
+const GITHUB_OWNER = process.env.NEXT_PUBLIC_GITHUB_OWNER || "";
+const GITHUB_REPO = process.env.NEXT_PUBLIC_GITHUB_REPO || "";
 
 interface WorkForm {
   filename: string;
@@ -60,6 +63,7 @@ export default function AdminPage() {
 
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [networkDiag, setNetworkDiag] = useState<string>("");
 
   useEffect(() => {
     if (!authenticated) return;
@@ -82,18 +86,22 @@ export default function AdminPage() {
     setStatus("loading");
     try {
       const files = await listFiles("content/works");
-      const items = await Promise.all(
+      const items = (await Promise.all(
         files.map(async (f) => {
-          const { content } = await getFile(f.path);
-          const parsed = matter(content);
-          return {
-            name: f.name,
-            path: f.path,
-            sha: f.sha,
-            title: parsed.data.title || f.name,
-          };
+          try {
+            const { content } = await getFile(f.path);
+            const parsed = matter(content);
+            return {
+              name: f.name,
+              path: f.path,
+              sha: f.sha,
+              title: parsed.data.title || f.name,
+            };
+          } catch (e) {
+            return null;
+          }
         })
-      );
+      )).filter(Boolean) as any[];
       setWorksList(items);
       setStatus("idle");
     } catch (err: any) {
@@ -193,19 +201,23 @@ export default function AdminPage() {
     setStatus("loading");
     try {
       const files = await listFiles("content/thoughts");
-      const items = await Promise.all(
+      const items = (await Promise.all(
         files.map(async (f) => {
-          const { content } = await getFile(f.path);
-          const parsed = matter(content);
-          return {
-            name: f.name,
-            path: f.path,
-            sha: f.sha,
-            date: parsed.data.date,
-            preview: parsed.content.trim().slice(0, 60),
-          };
+          try {
+            const { content } = await getFile(f.path);
+            const parsed = matter(content);
+            return {
+              name: f.name,
+              path: f.path,
+              sha: f.sha,
+              date: parsed.data.date,
+              preview: parsed.content.trim().slice(0, 60),
+            };
+          } catch (e) {
+            return null;
+          }
         })
-      );
+      )).filter(Boolean) as any[];
       setThoughtsList(items);
       setStatus("idle");
     } catch (err: any) {
@@ -230,9 +242,13 @@ export default function AdminPage() {
     try {
       const { content, sha } = await getFile(item.path);
       const parsed = matter(content);
+      const rawDate = parsed.data.date;
+      const dateStr = rawDate instanceof Date
+        ? rawDate.toISOString()
+        : String(rawDate || "");
       setThoughtForm({
         filename: item.name,
-        date: parsed.data.date ? parsed.data.date.slice(0, 16) : "",
+        date: dateStr.slice(0, 16),
         content: parsed.content.trim(),
         image: null,
         existingImagePath: parsed.data.image || null,
@@ -309,6 +325,32 @@ export default function AdminPage() {
     }
   }
 
+  async function testConnection() {
+    setNetworkDiag("Testing...");
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`,
+        {
+          headers: {
+            Authorization: `Bearer ${GITHUB_TOKEN}`,
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        }
+      );
+      if (res.ok) {
+        setNetworkDiag("GitHub API connection: OK");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setNetworkDiag(`GitHub API error: ${res.status} ${err.message || ""}`);
+      }
+    } catch (e: any) {
+      setNetworkDiag(
+        `Network blocked: ${e.message || "Failed to fetch"}. Check browser extensions (AdBlock/uBlock) or network proxy.`
+      );
+    }
+  }
+
   // ---------- UI ----------
   if (!authenticated) {
     return (
@@ -366,6 +408,19 @@ export default function AdminPage() {
       {status !== "idle" && message && (
         <div className="mb-6">
           <p className={`text-sm ${status === "error" ? "text-red-500" : "text-[var(--fg-muted)]"}`}>{message}</p>
+          {status === "error" && (
+            <button
+              onClick={testConnection}
+              className="mt-2 text-sm text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
+            >
+              Test GitHub connection →
+            </button>
+          )}
+          {networkDiag && (
+            <p className={`mt-2 text-sm ${networkDiag.includes("OK") ? "text-green-600" : "text-[var(--fg-muted)]"}`}>
+              {networkDiag}
+            </p>
+          )}
         </div>
       )}
 
