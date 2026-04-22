@@ -22,17 +22,17 @@ const lightVars: React.CSSProperties = {
 
 function ThoughtsSkeleton() {
   return (
-    <div className="flex flex-col divide-y divide-[var(--border)]">
+    <div className="flex flex-col gap-8">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="py-10 md:py-12">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="h-px w-6 bg-[var(--border)]" />
-            <div className="h-3 w-24 rounded skeleton-shimmer" />
-          </div>
-          <div className="space-y-2">
-            <div className="h-5 w-full max-w-[560px] rounded skeleton-shimmer" />
-            <div className="h-5 w-full max-w-[480px] rounded skeleton-shimmer" />
-            <div className="h-5 w-2/3 max-w-[400px] rounded skeleton-shimmer" />
+        <div
+          key={i}
+          className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8"
+        >
+          <div className="mb-6 h-6 w-24 rounded skeleton-shimmer" />
+          <div className="space-y-3">
+            <div className="h-5 w-full rounded skeleton-shimmer" />
+            <div className="h-5 w-full rounded skeleton-shimmer" />
+            <div className="h-5 w-2/3 rounded skeleton-shimmer" />
           </div>
         </div>
       ))}
@@ -116,7 +116,7 @@ export default function ThoughtsPage() {
       )}
 
       {!loading && !error && (
-        <StaggerContainer className="flex flex-col divide-y divide-[var(--border)]">
+        <StaggerContainer className="flex flex-col gap-8">
           {thoughts.map((thought, idx) => {
             const formattedDate = new Date(thought.date).toLocaleDateString(
               "en-US",
@@ -129,21 +129,24 @@ export default function ThoughtsPage() {
 
             return (
               <StaggerItem key={idx}>
-                <article className="group py-10 md:py-12">
-                  <div className="mb-5 flex items-center gap-3">
-                    <span className="h-px w-6 bg-[var(--border)] transition-all duration-500 group-hover:w-10 group-hover:bg-[var(--fg-muted)]" />
-                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--fg-muted)]">
+                <article className="group relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 transition-all duration-300 hover:shadow-md">
+                  {/* Date badge */}
+                  <div className="mb-6 flex items-center gap-3">
+                    <span className="h-px w-8 bg-[var(--border)] transition-all duration-500 group-hover:w-12 group-hover:bg-[var(--fg-muted)]" />
+                    <time className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fg-muted)]">
                       {formattedDate}
-                    </p>
+                    </time>
                   </div>
 
+                  {/* Quote content */}
                   <blockquote>
-                    <p className="whitespace-pre-wrap text-[17px] font-light leading-[1.75] text-[var(--fg-secondary)] md:text-lg">
+                    <p className="whitespace-pre-wrap text-xl font-light leading-[1.65] tracking-[-0.01em] text-[var(--fg)] md:text-2xl">
                       {thought.content}
                     </p>
                   </blockquote>
 
-                  {thought.image && (
+                  {/* Image if present */}
+                  {thought.image && thought.image !== "null" && (
                     <div className="mt-6 overflow-hidden rounded-xl border border-[var(--border)]">
                       <img
                         src={thought.image}

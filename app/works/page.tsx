@@ -20,21 +20,34 @@ const lightVars: React.CSSProperties = {
   "--ring": "rgba(87, 83, 78, 0.08)",
 } as React.CSSProperties;
 
+const gradients = [
+  "from-stone-200 to-stone-300",
+  "from-neutral-200 to-stone-300",
+  "from-warm-gray-200 to-stone-300",
+  "from-gray-200 to-stone-300",
+  "from-zinc-200 to-stone-300",
+];
+
+function getGradient(title: string) {
+  const idx = title.charCodeAt(0) % gradients.length;
+  return gradients[idx];
+}
+
 function WorksSkeleton() {
   return (
-    <div className="relative flex flex-col">
-      <div className="absolute left-[5px] top-2 bottom-0 w-px bg-gradient-to-b from-[var(--border)] via-[var(--border)] to-transparent md:left-[6px]" />
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="relative pl-10 md:pl-12">
-          <div className="absolute left-0 top-1.5 h-[11px] w-[11px] rounded-full border-2 border-[var(--border)] bg-[var(--bg)]" />
-          <div className="pb-16 md:pb-20">
-            <div className="mb-3 h-3 w-20 rounded skeleton-shimmer" />
-            <div className="mb-3 h-7 w-3/4 rounded skeleton-shimmer" />
-            <div className="mb-2 h-4 w-full max-w-[480px] rounded skeleton-shimmer" />
-            <div className="mb-5 h-4 w-2/3 max-w-[320px] rounded skeleton-shimmer" />
+    <div className="grid gap-5 sm:grid-cols-2">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
+        >
+          <div className="aspect-[16/10] skeleton-shimmer" />
+          <div className="p-5">
+            <div className="mb-2 h-5 w-3/4 rounded skeleton-shimmer" />
+            <div className="mb-4 h-4 w-full rounded skeleton-shimmer" />
             <div className="flex gap-2">
+              <div className="h-6 w-14 rounded-full skeleton-shimmer" />
               <div className="h-6 w-16 rounded-full skeleton-shimmer" />
-              <div className="h-6 w-20 rounded-full skeleton-shimmer" />
             </div>
           </div>
         </div>
@@ -100,7 +113,7 @@ export default function WorksPage() {
       </FadeIn>
 
       <FadeIn delay={0.06}>
-        <header className="mb-16 md:mb-20">
+        <header className="mb-14 md:mb-16">
           <h1 className="mb-3 text-[clamp(1.85rem,4.5vw,2.75rem)] font-normal tracking-[-0.025em] text-[var(--fg)]">
             Works
           </h1>
@@ -118,68 +131,73 @@ export default function WorksPage() {
       )}
 
       {!loading && !error && (
-        <StaggerContainer className="relative flex flex-col">
-          <div className="absolute left-[5px] top-2 bottom-0 w-px bg-gradient-to-b from-[var(--border)] via-[var(--border)] to-transparent md:left-[6px]" />
-
+        <StaggerContainer className="grid gap-5 sm:grid-cols-2">
           {works.map((work, idx) => (
             <StaggerItem key={idx}>
-              <div className="group relative pl-10 md:pl-12">
-                <div className="absolute left-0 top-1.5 h-[11px] w-[11px] rounded-full border-2 border-[var(--fg-subtle)] bg-[var(--bg)] transition-all duration-300 group-hover:scale-130 group-hover:border-[var(--fg)] group-hover:bg-[var(--fg)]" />
-
-                <article className="pb-16 md:pb-20">
-                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fg-muted)]">
-                    {work.date}
-                  </p>
-
-                  <h3 className="mb-2 text-xl font-medium tracking-[-0.01em] text-[var(--fg)]">
-                    {work.title}
-                  </h3>
-
-                  <p className="group/desc relative mb-5 max-w-[560px] text-[15px] leading-relaxed text-[var(--fg-secondary)]">
-                    <span className="line-clamp-2">{work.description}</span>
-                    {work.description?.length > 80 && (
-                      <span className="pointer-events-none absolute left-0 top-full z-10 mt-2 hidden max-w-[400px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm shadow-lg backdrop-blur-sm group-hover/desc:block">
-                        {work.description}
+              <a
+                href={work.link || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              >
+                {/* Cover image or gradient fallback */}
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  {work.image ? (
+                    <img
+                      src={work.image}
+                      alt={work.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div
+                      className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${getGradient(
+                        work.title
+                      )}`}
+                    >
+                      <span className="text-4xl font-light tracking-tight text-[var(--fg-subtle)]">
+                        {work.title?.charAt(0)?.toUpperCase()}
                       </span>
-                    )}
+                    </div>
+                  )}
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/5" />
+                </div>
+
+                {/* Card content */}
+                <div className="p-5">
+                  <div className="mb-1 flex items-center justify-between">
+                    <h3 className="text-lg font-medium tracking-[-0.01em] text-[var(--fg)]">
+                      {work.title}
+                    </h3>
+                    <span className="text-[var(--fg-subtle)] transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-[var(--fg-muted)]">
+                      →
+                    </span>
+                  </div>
+
+                  <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-[var(--fg-secondary)]">
+                    {work.description}
                   </p>
 
-                  {work.tags && work.tags.length > 0 && (
-                    <div className="mb-5 flex flex-wrap gap-2">
-                      {work.tags.map((tag: string) => (
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap gap-1.5">
+                      {work.tags?.map((tag: string) => (
                         <span
                           key={tag}
-                          className="tag-hover cursor-default rounded-full border border-[var(--border)] px-2.5 py-1 text-[11px] font-medium tracking-wide text-[var(--fg-muted)]"
+                          className="rounded-full bg-[var(--bg)] px-2 py-0.5 text-[11px] font-medium tracking-wide text-[var(--fg-muted)]"
                         >
                           {tag}
                         </span>
                       ))}
                     </div>
-                  )}
-
-                  {work.link && (
-                    <a
-                      href={work.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group/link inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
-                    >
-                      View project
-                      <span className="transition-transform duration-300 group-hover/link:translate-x-0.5">
-                        →
-                      </span>
-                    </a>
-                  )}
-                </article>
-              </div>
+                    <span className="text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
+                      {work.date}
+                    </span>
+                  </div>
+                </div>
+              </a>
             </StaggerItem>
           ))}
-
-          {works.length === 0 && (
-            <p className="py-12 text-center text-sm text-[var(--fg-muted)]">
-              No works yet.
-            </p>
-          )}
         </StaggerContainer>
       )}
     </div>
